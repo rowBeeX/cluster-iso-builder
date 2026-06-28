@@ -2,6 +2,7 @@
 set -euo pipefail
 
 repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Version must be kept in sync with configuration.nix (image.baseName) and flake.nix (inputs.nixpkgs).
 image="${NIX_IMAGE:-local/cluster-nix-iso-builder:26.05}"
 rebuild="${REBUILD_IMAGE:-0}"
 

@@ -43,15 +43,16 @@ install -m 0644 "${built_isos[0]}" "$output_dir/$out_name"
 
 sha256="$(sha256sum "$output_dir/$out_name" | cut -d' ' -f1)"
 bytes="$(stat -c %s "$output_dir/$out_name")"
-metadata="$(nix flake metadata --json)"
-revision="unknown"
-if [[ "$metadata" =~ \"rev\":\"([0-9a-f]+)\" ]]; then
-  revision="${BASH_REMATCH[1]}"
-fi
+revision="$(nix flake metadata --json | jq -r '.locks.nodes.nixpkgs.locked.rev // "unknown"')"
 generated_at="$(date --utc +%Y-%m-%dT%H:%M:%SZ)"
 
-printf '{\n  "path": "artifacts/output/%s",\n  "bytes": %s,\n  "sha256": "%s",\n  "nixpkgs_revision": "%s",\n  "generated_at": "%s"\n}\n' \
-  "$out_name" "$bytes" "$sha256" "$revision" "$generated_at" \
+jq -n \
+  --arg path "artifacts/output/$out_name" \
+  --argjson bytes "$bytes" \
+  --arg sha256 "$sha256" \
+  --arg nixpkgs_revision "$revision" \
+  --arg generated_at "$generated_at" \
+  '{path: $path, bytes: $bytes, sha256: $sha256, nixpkgs_revision: $nixpkgs_revision, generated_at: $generated_at}' \
   > "$meta_dir/output-iso.json"
 
 printf 'ISO: %s\nSHA256: %s\n' "$output_dir/$out_name" "$sha256"

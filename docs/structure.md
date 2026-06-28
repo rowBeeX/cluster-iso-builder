@@ -26,7 +26,7 @@ artifacts/                      Build-Artefakte (gitignored)
 docs/
   structure.md                  Diese Datei
 
-.gitignore                      Schließt artifacts/output/, artifacts/meta/ und Nix-Ergebnisse aus
+.gitignore                      Schließt das gesamte artifacts/-Verzeichnis, *.iso, *.iso.sha256 und Nix-Ergebnisse aus
 ```
 
 ## Verwendung

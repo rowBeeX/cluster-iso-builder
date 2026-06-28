@@ -13,7 +13,7 @@
   # ---------------------------------------------------------------------------
   # Dateisysteme
   # ---------------------------------------------------------------------------
-  # Attributset-Form: erlaubt lib.mkForce zum gezielten Deaktivieren einzelner FS-Typen
+  # Attributset-Form statt Listenform, damit einzelne Einträge selektiv überschrieben werden können
   boot.supportedFilesystems = {
     btrfs = true;
     zfs = true;

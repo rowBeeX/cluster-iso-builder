@@ -11,9 +11,13 @@ the exact nixpkgs revision is pinned by `flake.lock`.
 ./build.sh
 ```
 
-The ISO, checksum and build metadata are written below `artifacts/`. That
-directory and all common image formats are ignored by Git. A reference ISO is
-not required; Nix builds the installer directly from the locked inputs.
+`build.sh` is the entry point; it builds the Podman image if needed and runs
+`scripts/container-build.sh` inside it. That script performs the actual `nix build`
+and writes the ISO, checksum and metadata to `artifacts/`.
+
+The `artifacts/` directory and all common image formats are ignored by Git.
+A reference ISO is not required; Nix builds the installer directly from the
+locked inputs.
 
 Use `REBUILD_IMAGE=1 ./build.sh` or `./build.sh --rebuild` after changing the
 `Containerfile`.

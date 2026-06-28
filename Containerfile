@@ -7,7 +7,7 @@ RUN printf '%s\n' \
   'sandbox = false' \
   'max-jobs = auto' \
   'cores = 0' \
-  >> /etc/nix/nix.conf
+  > /etc/nix/nix.conf
 
 WORKDIR /workspace
 
