@@ -1,0 +1,10 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "type": "command",
+        "command": "/home/tobias/.local/bin/vectimus hook --source copilot"
+      }
+    ]
+  }
+}

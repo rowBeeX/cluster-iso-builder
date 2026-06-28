@@ -1,0 +1,24 @@
+# Nix build results and caches
+/result
+/result-*
+/.direnv/
+
+# Generated installer artifacts. Checksums and metadata belong to the ISO and
+# must not be committed either.
+/artifacts/
+*.iso
+*.iso.sha256
+*.img
+*.qcow2
+
+# Local credentials and tool state
+/.env
+/secret/
+/secrets/
+/.vectimus/keys/
+/.vectimus/receipts/
+
+# Editor and test debris
+*.log
+*.tmp
+.DS_Store

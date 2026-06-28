@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"files.exclude": {
+			"**/.codex": true,
+			"**/.vectimus": true
+		},
+		"search.exclude": {
+			"**/.codex": true,
+			"**/.vectimus": true
+		}
+	}
+}
