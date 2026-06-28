@@ -12,6 +12,7 @@
 *.qcow2
 
 # Local credentials and tool state
+/.codex/
 /.env
 /secret/
 /secrets/
