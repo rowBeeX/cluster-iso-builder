@@ -9,6 +9,10 @@ RUN printf '%s\n' \
   'cores = 0' \
   > /etc/nix/nix.conf
 
+# container-build.sh writes ISO metadata with jq; bake it into the build image
+# so the metadata step does not fail with "jq: command not found".
+RUN nix profile install nixpkgs#jq
+
 WORKDIR /workspace
 
 ENTRYPOINT ["bash", "/workspace/scripts/container-build.sh"]
