@@ -36,7 +36,7 @@ then run a complete build:
 ```bash
 podman run --rm -v "$PWD:/workspace:Z" -w /workspace \
   --entrypoint bash \
-  local/cluster-nix-iso-builder:26.05 \
+  local/cluster-iso-builder:26.05 \
   -lc 'nix flake update'
 ./build.sh
 ```

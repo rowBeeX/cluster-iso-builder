@@ -2,8 +2,8 @@
 set -euo pipefail
 
 repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# Version must be kept in sync with configuration.nix (image.baseName) and flake.nix (inputs.nixpkgs).
-image="${NIX_IMAGE:-local/cluster-nix-iso-builder:26.05}"
+# NIX_IMAGE tag is a cosmetic Podman label; real version pinning lives in flake.nix/flake.lock (nixpkgs ref) and the digest in Containerfile. Bump for readability when the NixOS release changes.
+image="${NIX_IMAGE:-local/cluster-iso-builder:26.05}"
 rebuild="${REBUILD_IMAGE:-0}"
 
 usage() {

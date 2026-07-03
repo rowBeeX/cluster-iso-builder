@@ -9,7 +9,7 @@ build.sh                        Einstiegspunkt: baut den Container und startet d
 Containerfile                   Podman-Container-Definition mit Nix-Installation und Build-Umgebung
 flake.nix                       Nix-Flake: definiert `installerIso` als Build-Ausgabe
 flake.lock                      Eingaben-Lock (nicht manuell bearbeiten)
-configuration.nix               NixOS-Konfiguration für das Installer-ISO (Benutzer, SSH, Partitionierung)
+configuration.nix               NixOS-Konfiguration für das Installer-ISO (Benutzer, SSH, Pakete)
 iso-build.code-workspace        VS-Code-Workspace-Konfiguration für dieses Repo
 README.md                       Kurzübersicht: Zweck, Verwendung, Voraussetzungen
 
