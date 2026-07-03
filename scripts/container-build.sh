@@ -23,6 +23,11 @@ if [[ "$mode" != build ]]; then
 fi
 
 mkdir -p "$output_dir" "$meta_dir"
+
+# Resolve jq from the pinned nixpkgs (via this flake's lock) so the metadata
+# step stays reproducible instead of depending on an unpinned registry install.
+jq_bin="$(nix build --no-link --print-out-paths --inputs-from . nixpkgs#jq)/bin/jq"
+
 out_link="$(mktemp -d)/installer-iso"
 nix build .#installerIso --out-link "$out_link" --print-build-logs --show-trace
 
@@ -43,10 +48,10 @@ install -m 0644 "${built_isos[0]}" "$output_dir/$out_name"
 
 sha256="$(sha256sum "$output_dir/$out_name" | cut -d' ' -f1)"
 bytes="$(stat -c %s "$output_dir/$out_name")"
-revision="$(nix flake metadata --json | jq -r '.locks.nodes.nixpkgs.locked.rev // "unknown"')"
+revision="$(nix flake metadata --json | "$jq_bin" -r '.locks.nodes.nixpkgs.locked.rev // "unknown"')"
 generated_at="$(date --utc +%Y-%m-%dT%H:%M:%SZ)"
 
-jq -n \
+"$jq_bin" -n \
   --arg path "artifacts/output/$out_name" \
   --argjson bytes "$bytes" \
   --arg sha256 "$sha256" \

@@ -2,6 +2,22 @@
 
 Baut NixOS-Installer-ISOs für den Cluster in einem Podman-Container.
 
+## Einordnung
+
+Dieses Repo steht *vor* allen anderen Repos des Monorepos. Es definiert keine
+Laufzeitdienste, kein Netzwerk, kein DNS und enthält keine Secrets; es erzeugt
+nur das Installer-ISO, mit dem Bare-Metal-Hosts (lokaler und öffentlicher
+Cluster) provisioniert werden, bevor auf ihnen NixOS-Konfiguration, k3s, Cilium,
+Envoy Gateway oder ArgoCD existieren.
+
+Ablauf downstream: Operator bootet das ISO auf der Zielhardware, meldet sich per
+SSH als `root` an (ausschließlich mit dem einen eingebackenen Operator-
+ed25519-Key; Passwort-Auth ist abgelehnt), partitioniert die Disks mit `disko`
+und schreibt die eigentliche NixOS-Konfiguration mit `nixos-install` aus dem
+passenden `*-nix`-Repo. Die eingebackenen Werkzeuge (disko, sops/age,
+nixos-install-tools, zfs/btrfs/lvm2/mdadm/nfs, python3, rsync) dienen genau
+diesem Bootstrap; das ISO selbst trägt keine Secrets.
+
 ## Dateibaum
 
 ```
