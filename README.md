@@ -17,16 +17,17 @@ The ISO is a live NixOS installer that bootstraps a target host:
 2. SSH into the live installer as `root`. Authentication is key-only: the single
    baked operator ed25519 key is the only accepted credential; password and
    keyboard-interactive auth are refused (`configuration.nix`).
-3. Partition and format the disks with `disko`, then lay down the real NixOS
-   configuration with `nixos-install` (`nixos-install-tools`), pointing at the
-   host's flake in the matching `*-nix` repo (`local-cluster-nix` /
-   `public-cluster-nix`).
+3. Partition and format the disks and run `nixos-install` (`nixos-install-tools`)
+   via `install_dev_host.py` from `cluster-testing`, pointing at the host's flake
+   in the matching `*-nix` repo (`local-cluster-nix` / `public-cluster-nix`).
+   Partitioning is done imperatively with `gptfdisk`/`parted` + `mkfs`; the disk
+   UUIDs are fixed and mirror each host's `hosts/dev/*/storage-map.nix`.
 4. Reboot into the installed system. From there the node runs its NixOS config
    (k3s, Cilium CNI + L2 announcement, the Envoy Gateway edge, ArgoCD, etc.);
    none of that lives in this repo.
 
 The tools baked into the installer exist to support exactly this bootstrap:
-`disko` (declarative partitioning), `sops`/`age` (decrypting host secrets during
+`gptfdisk`/`parted` (partitioning), `sops`/`age` (decrypting host secrets during
 install), `nixos-install-tools`, the `zfs`/`btrfs-progs`/`lvm2`/`mdadm`/
 `nfs-utils` storage stacks, and `python3`/`rsync`/`git` for the install
 automation. The ISO carries no secrets itself; `sops`/`age` are for the
@@ -38,7 +39,7 @@ flowchart LR
   img --> build["container-build.sh: nix build .#installerIso (flake.lock)"]
   build --> art["artifacts/: ISO + .iso.sha256 + meta/output-iso.json"]
   art --> boot["boot ISO on target host, SSH in with operator key"]
-  boot --> install["disko + nixos-install from the host's *-nix flake"]
+  boot --> install["install_dev_host.py: partition + nixos-install from the host's *-nix flake"]
   install --> node["running cluster node (k3s, Cilium, Envoy Gateway, ArgoCD)"]
 ```
 
@@ -64,7 +65,7 @@ Use `REBUILD_IMAGE=1 ./build.sh` or `./build.sh --rebuild` after changing the
 
 The image enables key-only SSH for the configured operator key and includes
 the tools needed by the cluster installation automation: Python, rsync,
-SOPS/age, disko, ZFS, Btrfs, LVM, mdraid, NFS and common diagnostics.
+SOPS/age, gptfdisk/parted, ZFS, Btrfs, LVM, mdraid, NFS and common diagnostics.
 
 ## Updating inputs
 

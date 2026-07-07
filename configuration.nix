@@ -92,7 +92,6 @@
     btop
     curl
     cryptsetup
-    disko
     git
     gptfdisk
     htop

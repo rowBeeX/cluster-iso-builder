@@ -12,11 +12,12 @@ Envoy Gateway oder ArgoCD existieren.
 
 Ablauf downstream: Operator bootet das ISO auf der Zielhardware, meldet sich per
 SSH als `root` an (ausschließlich mit dem einen eingebackenen Operator-
-ed25519-Key; Passwort-Auth ist abgelehnt), partitioniert die Disks mit `disko`
-und schreibt die eigentliche NixOS-Konfiguration mit `nixos-install` aus dem
-passenden `*-nix`-Repo. Die eingebackenen Werkzeuge (disko, sops/age,
-nixos-install-tools, zfs/btrfs/lvm2/mdadm/nfs, python3, rsync) dienen genau
-diesem Bootstrap; das ISO selbst trägt keine Secrets.
+ed25519-Key; Passwort-Auth ist abgelehnt), partitioniert die Disks per
+`install_dev_host.py` (gptfdisk/parted + mkfs) und schreibt die eigentliche
+NixOS-Konfiguration mit `nixos-install` aus dem passenden `*-nix`-Repo. Die
+eingebackenen Werkzeuge (gptfdisk/parted, sops/age, nixos-install-tools,
+zfs/btrfs/lvm2/mdadm/nfs, python3, rsync) dienen genau diesem Bootstrap; das ISO
+selbst trägt keine Secrets.
 
 ## Dateibaum
 
