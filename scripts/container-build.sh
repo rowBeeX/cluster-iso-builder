@@ -46,6 +46,22 @@ install -m 0644 "${built_isos[0]}" "$output_dir/$out_name"
   sha256sum "$out_name" > "$out_name.sha256"
 )
 
+# ISO + Checksumme signieren (#32) — nur wenn ein minisign-Secret-Key
+# bereitgestellt wird (gemountet/als Env, NICHT im Repo; passwortloser
+# Build-Key). Ohne Key: nur SHA256, mit Warnung. Verify:
+#   minisign -Vm <iso> -P <public-key>
+if [[ -n "${MINISIGN_SECRET_KEY_FILE:-}" && -s "${MINISIGN_SECRET_KEY_FILE}" ]]; then
+  minisign_bin="$(nix build --no-link --print-out-paths --inputs-from . nixpkgs#minisign)/bin/minisign"
+  (
+    cd "$output_dir"
+    "$minisign_bin" -S -s "${MINISIGN_SECRET_KEY_FILE}" -m "$out_name"
+    "$minisign_bin" -S -s "${MINISIGN_SECRET_KEY_FILE}" -m "$out_name.sha256"
+  )
+  printf 'Signatur: %s.minisig\n' "$out_name"
+else
+  printf 'Hinweis: kein MINISIGN_SECRET_KEY_FILE — ISO nur mit SHA256, ohne Signatur (#32).\n' >&2
+fi
+
 sha256="$(sha256sum "$output_dir/$out_name" | cut -d' ' -f1)"
 bytes="$(stat -c %s "$output_dir/$out_name")"
 revision="$(nix flake metadata --json | "$jq_bin" -r '.locks.nodes.nixpkgs.locked.rev // "unknown"')"

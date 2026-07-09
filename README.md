@@ -81,5 +81,24 @@ podman run --rm -v "$PWD:/workspace:Z" -w /workspace \
 ./build.sh
 ```
 
+## SSH-Key & ISO-Signatur
+
+- **Autorisierter Installer-SSH-Key (#30):** in `iso-authorized-keys` (eine Zeile
+  je Key). Rotation = Datei bearbeiten + neu bauen. Es ist ein öffentlicher Key
+  (kein Secret); wer ihn privat halten will, gitignored die Datei und befüllt sie
+  pro Build (die Flake sieht dann nur getrackte Dateien — Datei tracken oder mit
+  `--impure` bauen).
+- **ISO-Signatur (#32):** optional mit minisign. Der Secret-Key liegt NICHT im
+  Repo; beim Build übergeben:
+
+  ```bash
+  MINISIGN_SECRET_KEY_FILE=~/.minisign/iso.key ./build.sh   # erzeugt <iso>.minisig
+  # Verifizieren: minisign -Vm <iso> -P <public-key>
+  ```
+
+  Ohne Key wird nur die SHA256-Prüfsumme erzeugt (mit Hinweis).
+- **Nix-Sandbox (#31):** im rootless-Podman-Container deaktiviert (kein
+  privilegierter mount/user-namespace); Begründung im `Containerfile`.
+
 Do not commit ISOs, disk images, checksums generated for them, build metadata,
 or local credentials.

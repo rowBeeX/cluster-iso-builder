@@ -2,6 +2,12 @@
 # the complete ISO build afterwards.
 FROM docker.io/nixos/nix@sha256:898e3874bc80a8fbd7df6001b6c83d6e0c904a942e3a4cdf8a89881458333cac
 
+# sandbox = false: Der Nix-Build-Sandbox braucht mount + user-namespaces mit
+# Privilegien, die im rootless-Podman-Container nicht zuverlässig verfügbar sind
+# (#31). Die Isolation liefert stattdessen der Container selbst + die digest-
+# gepinnten Inputs (Containerfile-Digest + flake.lock) = reproduzierbar. Wo eine
+# echte Sandbox möglich ist (privilegierter CI-Runner / Nix auf dem Host), kann
+# sie aktiviert werden; dort ist `sandbox = true` vorzuziehen.
 RUN printf '%s\n' \
   'experimental-features = nix-command flakes' \
   'sandbox = false' \

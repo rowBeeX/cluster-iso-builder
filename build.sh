@@ -37,10 +37,17 @@ fi
 
 mkdir -p "$repo_dir/artifacts/output" "$repo_dir/artifacts/meta"
 
+# Optionaler minisign-Secret-Key für die ISO-Signatur (#32); NICHT im Repo.
+sign_args=()
+if [[ -n "${MINISIGN_SECRET_KEY_FILE:-}" ]]; then
+  sign_args=(--volume "$MINISIGN_SECRET_KEY_FILE:/minisign.key:ro" --env MINISIGN_SECRET_KEY_FILE=/minisign.key)
+fi
+
 podman run --rm --pull=never \
   --volume "$repo_dir:/workspace:Z" \
   --workdir /workspace \
   --env BUILD_MODE="$mode" \
   --env OUTPUT_DIR=/workspace/artifacts/output \
   --env META_DIR=/workspace/artifacts/meta \
+  "${sign_args[@]}" \
   "$image"

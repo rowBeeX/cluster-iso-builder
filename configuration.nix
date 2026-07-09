@@ -78,9 +78,15 @@
   # Benutzer
   # ---------------------------------------------------------------------------
   users.users.root = {
-    openssh.authorizedKeys.keys = [
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHGiIrQddHA7yHu2dqGiJP2+fL3uVfncgyezapF99br8 tobias@tobias-computer"
-    ];
+    # Autorisierte Installer-SSH-Keys aus einer dedizierten Datei (#30), damit
+    # der Operator-Key nicht im Modulcode verstreut liegt und Rotation ein
+    # Ein-Datei-Edit ist. Für eine private Ablage: `iso-authorized-keys`
+    # gitignoren und pro Build befüllen (z. B. aus ~/.ssh/id_ed25519.pub).
+    # Es ist ein öffentlicher Key (kein Secret), aber ein Operator-Artefakt.
+    openssh.authorizedKeys.keys =
+      lib.filter (k: k != "" && !lib.hasPrefix "#" k) (
+        lib.splitString "\n" (builtins.readFile ./iso-authorized-keys)
+      );
   };
 
   # ---------------------------------------------------------------------------
