@@ -27,6 +27,7 @@ Containerfile                   Podman-Container-Definition mit Nix-Installation
 flake.nix                       Nix-Flake: definiert `installerIso` als Build-Ausgabe
 flake.lock                      Eingaben-Lock (nicht manuell bearbeiten)
 configuration.nix               NixOS-Konfiguration für das Installer-ISO (Benutzer, SSH, Pakete)
+iso-authorized-keys             Autorisierte Installer-SSH-Keys (ein Key je Zeile)
 cluster-iso-builder.code-workspace  VS-Code-Workspace-Konfiguration für dieses Repo
 README.md                       Kurzübersicht: Zweck, Verwendung, Voraussetzungen
 

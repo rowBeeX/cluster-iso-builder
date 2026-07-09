@@ -37,7 +37,7 @@ if (( ${#built_isos[@]} != 1 )); then
   exit 1
 fi
 
-find "$output_dir" -maxdepth 1 -type f \( -name '*.iso' -o -name '*.iso.sha256' \) -delete
+find "$output_dir" -maxdepth 1 -type f \( -name '*.iso' -o -name '*.iso.sha256' -o -name '*.minisig' \) -delete
 out_name="$(basename "${built_isos[0]}")"
 install -m 0644 "${built_isos[0]}" "$output_dir/$out_name"
 

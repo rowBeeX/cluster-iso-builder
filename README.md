@@ -14,9 +14,10 @@ Envoy Gateway or ArgoCD exists on them.
 The ISO is a live NixOS installer that bootstraps a target host:
 
 1. Boot the ISO on the target hardware (a local-cluster or public-cluster node).
-2. SSH into the live installer as `root`. Authentication is key-only: the single
-   baked operator ed25519 key is the only accepted credential; password and
-   keyboard-interactive auth are refused (`configuration.nix`).
+2. SSH into the live installer as `root`. Authentication is key-only: the
+   operator SSH key(s) from `iso-authorized-keys` are the only accepted
+   credentials; password and keyboard-interactive auth are refused
+   (`configuration.nix`).
 3. Partition and format the disks and run `nixos-install` (`nixos-install-tools`)
    via `install_dev_host.py` from `cluster-testing`, pointing at the host's flake
    in the matching `*-nix` repo (`local-cluster-nix` / `public-cluster-nix`).
@@ -73,32 +74,31 @@ Update deliberately inside the build container, review the lock-file diff,
 then run a complete build:
 
 ```bash
-# Reuse the image build.sh already built. The tag defaults to build.sh's own
-# default (or your $NIX_IMAGE override); it is never hard-coded here.
-image="${NIX_IMAGE:-$(sed -n 's/.*NIX_IMAGE:-\(.*\)}"/\1/p' build.sh)}"
+# Reuse the image build.sh already built.
+image="${NIX_IMAGE:-local/cluster-iso-builder:26.05}"  # match build.sh's default, or set NIX_IMAGE
 podman run --rm -v "$PWD:/workspace:Z" -w /workspace \
   --entrypoint bash "$image" -lc 'nix flake update'
 ./build.sh
 ```
 
-## SSH-Key & ISO-Signatur
+## SSH key & ISO signature
 
-- **Autorisierter Installer-SSH-Key (#30):** in `iso-authorized-keys` (eine Zeile
-  je Key). Rotation = Datei bearbeiten + neu bauen. Es ist ein öffentlicher Key
-  (kein Secret); wer ihn privat halten will, gitignored die Datei und befüllt sie
-  pro Build (die Flake sieht dann nur getrackte Dateien — Datei tracken oder mit
-  `--impure` bauen).
-- **ISO-Signatur (#32):** optional mit minisign. Der Secret-Key liegt NICHT im
-  Repo; beim Build übergeben:
+- **Authorized installer SSH key (#30):** in `iso-authorized-keys` (one key per
+  line). Rotation = edit the file + rebuild. It is a public key (not a secret);
+  if you want to keep it private, gitignore the file and populate it per build
+  (the flake then only sees tracked files — track the file or build with
+  `--impure`).
+- **ISO signature (#32):** optional, with minisign. The secret key is NOT in the
+  repo; pass it at build time:
 
   ```bash
-  MINISIGN_SECRET_KEY_FILE=~/.minisign/iso.key ./build.sh   # erzeugt <iso>.minisig
-  # Verifizieren: minisign -Vm <iso> -P <public-key>
+  MINISIGN_SECRET_KEY_FILE=~/.minisign/iso.key ./build.sh   # produces <iso>.minisig
+  # Verify: minisign -Vm <iso> -P <public-key>
   ```
 
-  Ohne Key wird nur die SHA256-Prüfsumme erzeugt (mit Hinweis).
-- **Nix-Sandbox (#31):** im rootless-Podman-Container deaktiviert (kein
-  privilegierter mount/user-namespace); Begründung im `Containerfile`.
+  Without a key only the SHA256 checksum is produced (with a note).
+- **Nix sandbox (#31):** disabled in the rootless Podman container (no
+  privileged mount/user namespace); rationale in the `Containerfile`.
 
 Do not commit ISOs, disk images, checksums generated for them, build metadata,
 or local credentials.
