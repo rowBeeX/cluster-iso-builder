@@ -21,14 +21,14 @@ The ISO is a live NixOS installer that bootstraps a target host:
 3. Partition and format the disks and run `nixos-install` (`nixos-install-tools`)
    via `install_dev_host.py` from `cluster-testing`, pointing at the host's flake
    in the matching `*-nix` repo (`local-cluster-nix` / `public-cluster-nix`).
-   Partitioning is done imperatively with `gptfdisk`/`parted` + `mkfs`; the disk
+   Partitioning is done imperatively with `gptfdisk` (`sgdisk`) + `mkfs`; the disk
    UUIDs are fixed and mirror each host's `hosts/dev/*/storage-map.nix`.
 4. Reboot into the installed system. From there the node runs its NixOS config
    (k3s, Cilium CNI + L2 announcement, the Envoy Gateway edge, ArgoCD, etc.);
    none of that lives in this repo.
 
 The tools baked into the installer exist to support exactly this bootstrap:
-`gptfdisk`/`parted` (partitioning), `sops`/`age` (decrypting host secrets during
+`gptfdisk` (`sgdisk`, partitioning; `parted` is bundled but unused), `sops`/`age` (decrypting host secrets during
 install), `nixos-install-tools`, the `zfs`/`btrfs-progs`/`lvm2`/`mdadm`/
 `nfs-utils` storage stacks, and `python3`/`rsync`/`git` for the install
 automation. The ISO carries no secrets itself; `sops`/`age` are for the
@@ -66,7 +66,7 @@ Use `REBUILD_IMAGE=1 ./build.sh` or `./build.sh --rebuild` after changing the
 
 The image enables key-only SSH for the configured operator key and includes
 the tools needed by the cluster installation automation: Python, rsync,
-SOPS/age, gptfdisk/parted, ZFS, Btrfs, LVM, mdraid, NFS and common diagnostics.
+SOPS/age, gptfdisk (sgdisk; parted for manual use only), ZFS, Btrfs, LVM, mdraid, NFS and common diagnostics.
 
 ## Updating inputs
 

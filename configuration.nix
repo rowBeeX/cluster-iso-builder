@@ -50,13 +50,6 @@
   # Nix-Einstellungen im Installer
   # ---------------------------------------------------------------------------
   nix.settings = {
-    # Öffentlicher Binary Cache für schnelle Pulls
-    substituters = [
-      "https://cache.nixos.org"
-    ];
-    trusted-public-keys = [
-      "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
-    ];
     # Parallelität anpassen (während des Bootstraps auf der Zielmaschine)
     max-jobs = "auto";
     cores = 0;

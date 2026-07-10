@@ -11,9 +11,10 @@ Cluster) provisioniert werden, bevor auf ihnen NixOS-Konfiguration, k3s, Cilium,
 Envoy Gateway oder ArgoCD existieren.
 
 Ablauf downstream: Operator bootet das ISO auf der Zielhardware, meldet sich per
-SSH als `root` an (ausschließlich mit dem einen eingebackenen Operator-
-ed25519-Key; Passwort-Auth ist abgelehnt), partitioniert die Disks per
-`install_dev_host.py` (gptfdisk/parted + mkfs) und schreibt die eigentliche
+SSH als `root` an (ausschließlich mit den autorisierten Operator-SSH-Keys aus
+`iso-authorized-keys`, ein Key je Zeile; Passwort-Auth ist abgelehnt),
+partitioniert die Disks per `install_dev_host.py` (gptfdisk (sgdisk) + mkfs) und
+schreibt die eigentliche
 NixOS-Konfiguration mit `nixos-install` aus dem passenden `*-nix`-Repo. Die
 eingebackenen Werkzeuge (gptfdisk/parted, sops/age, nixos-install-tools,
 zfs/btrfs/lvm2/mdadm/nfs, python3, rsync) dienen genau diesem Bootstrap; das ISO
