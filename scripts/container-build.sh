@@ -26,7 +26,9 @@ mkdir -p "$output_dir" "$meta_dir"
 
 # Resolve jq from the pinned nixpkgs (via this flake's lock) so the metadata
 # step stays reproducible instead of depending on an unpinned registry install.
-jq_bin="$(nix build --no-link --print-out-paths --inputs-from . nixpkgs#jq)/bin/jq"
+# Select jq's `bin` output explicitly: jq is multi-output (bin + man), and a bare
+# `nixpkgs#jq` prints several store paths, so appending /bin/jq to the join breaks.
+jq_bin="$(nix build --no-link --print-out-paths --inputs-from . nixpkgs#jq.bin)/bin/jq"
 
 out_link="$(mktemp -d)/installer-iso"
 nix build .#installerIso --out-link "$out_link" --print-build-logs --show-trace
