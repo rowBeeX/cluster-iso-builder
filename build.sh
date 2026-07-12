@@ -2,7 +2,7 @@
 set -euo pipefail
 
 repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# NIX_IMAGE tag is a cosmetic Podman label; real pinning is flake.lock plus the Containerfile digest.
+# Das NIX_IMAGE-Tag ist nur ein Podman-Label; tatsächlich pinnen flake.lock und der Containerfile-Digest.
 image="${NIX_IMAGE:-local/cluster-iso-builder:26.05}"
 rebuild="${REBUILD_IMAGE:-0}"
 

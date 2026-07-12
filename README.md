@@ -24,7 +24,7 @@ The ISO is a live NixOS installer that bootstraps a target host:
    Partitioning is done imperatively with `gptfdisk` (`sgdisk`) + `mkfs`; the disk
    UUIDs are fixed and mirror each host's `hosts/dev/*/storage-map.nix`.
 4. Reboot into the installed system. From there the node runs its NixOS config
-   (k3s, Cilium CNI + L2 announcement, the Envoy Gateway edge, ArgoCD, etc.);
+   (k3s, Cilium CNI, der hostNetwork-Envoy-Gateway-Edge und Argo CD);
    none of that lives in this repo.
 
 The tools baked into the installer exist to support exactly this bootstrap:

@@ -1,6 +1,6 @@
-# Digest-pinned Nix build image. Update the digest intentionally and validate
-# the complete ISO build afterwards.
-FROM docker.io/nixos/nix@sha256:898e3874bc80a8fbd7df6001b6c83d6e0c904a942e3a4cdf8a89881458333cac
+# Digest-gepinntes Nix-Build-Image. Den Digest nur bewusst aktualisieren und
+# anschließend den vollständigen ISO-Build validieren.
+FROM docker.io/nixos/nix:2.34.8@sha256:c03c1081ba8fb98528dee2a677dee6f42bdddb6b90e1c14c67aba8c1e31ed4bb
 
 # sandbox = false: Der Nix-Build-Sandbox braucht mount + user-namespaces mit
 # Privilegien, die im rootless-Podman-Container nicht zuverlässig verfügbar sind
