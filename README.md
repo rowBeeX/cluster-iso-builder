@@ -24,7 +24,7 @@ The ISO is a live NixOS installer that bootstraps a target host:
    Partitioning is done imperatively with `gptfdisk` (`sgdisk`) + `mkfs`; the disk
    UUIDs are fixed and mirror each host's `hosts/dev/*/storage-map.nix`.
 4. Reboot into the installed system. From there the node runs its NixOS config
-   (k3s, Cilium CNI, der hostNetwork-Envoy-Gateway-Edge und Argo CD);
+   (k3s, Cilium CNI, the hostNetwork Envoy Gateway edge and Argo CD);
    none of that lives in this repo.
 
 The tools baked into the installer exist to support exactly this bootstrap:
@@ -64,9 +64,10 @@ Use `REBUILD_IMAGE=1 ./build.sh` or `./build.sh --rebuild` after changing the
 
 ## Installer contents
 
-The image enables key-only SSH for the configured operator key and includes
-the tools needed by the cluster installation automation: Python, rsync,
-SOPS/age, gptfdisk (sgdisk; parted for manual use only), ZFS, Btrfs, LVM, mdraid, NFS and common diagnostics.
+The image enables key-only SSH for the configured operator key. The baked-in
+installer tools are the ones listed in *How the ISO is used downstream* above
+(`parted` is bundled but unused; `sgdisk` does the partitioning), plus common
+disk/network diagnostics.
 
 ## Updating inputs
 
