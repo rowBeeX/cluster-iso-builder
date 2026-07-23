@@ -44,6 +44,8 @@ if [[ -n "${MINISIGN_SECRET_KEY_FILE:-}" ]]; then
 fi
 
 podman run --rm --pull=never \
+  --cap-add SYS_ADMIN \
+  --security-opt unmask=ALL \
   --volume "$repo_dir:/workspace:Z" \
   --workdir /workspace \
   --env BUILD_MODE="$mode" \

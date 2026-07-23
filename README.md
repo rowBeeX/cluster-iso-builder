@@ -98,8 +98,10 @@ podman run --rm -v "$PWD:/workspace:Z" -w /workspace \
   ```
 
   Without a key only the SHA256 checksum is produced (with a note).
-- **Nix sandbox (#31):** disabled in the rootless Podman container (no
-  privileged mount/user namespace); rationale in the `Containerfile`.
+- **Nix sandbox (#31):** enforced in the rootless Podman container. The
+  container receives only the mount-namespace capability required by Nix and
+  fails closed if sandbox setup is unavailable; details are in the
+  `Containerfile`.
 
 Do not commit ISOs, disk images, checksums generated for them, build metadata,
 or local credentials.
