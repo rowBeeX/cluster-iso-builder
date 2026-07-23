@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-workspace="${WORKSPACE:-/workspace}"
+workspace=/workspace
 output_dir="${OUTPUT_DIR:-$workspace/artifacts/output}"
 meta_dir="${META_DIR:-$workspace/artifacts/meta}"
 mode="${BUILD_MODE:-build}"
