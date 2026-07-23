@@ -53,7 +53,7 @@
     settings = {
       PasswordAuthentication = false;
       KbdInteractiveAuthentication = false;
-      PermitRootLogin             = "prohibit-password";
+      PermitRootLogin = "prohibit-password";
     };
   };
 
@@ -64,10 +64,9 @@
     # Ein-Datei-Edit ist. Für eine private Ablage: `iso-authorized-keys`
     # gitignoren und pro Build befüllen (z. B. aus ~/.ssh/id_ed25519.pub).
     # Es ist ein öffentlicher Key (kein Secret), aber ein Operator-Artefakt.
-    openssh.authorizedKeys.keys =
-      lib.filter (k: k != "" && !lib.hasPrefix "#" k) (
-        lib.splitString "\n" (builtins.readFile ./iso-authorized-keys)
-      );
+    openssh.authorizedKeys.keys = lib.filter (k: k != "" && !lib.hasPrefix "#" k) (
+      lib.splitString "\n" (builtins.readFile ./iso-authorized-keys)
+    );
   };
 
   # Pakete im Installer-Image
