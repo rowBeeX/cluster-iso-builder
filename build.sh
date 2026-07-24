@@ -43,6 +43,10 @@ if [[ -n "${MINISIGN_SECRET_KEY_FILE:-}" ]]; then
   sign_args=(--volume "$MINISIGN_SECRET_KEY_FILE:/minisign.key:ro" --env MINISIGN_SECRET_KEY_FILE=/minisign.key)
 fi
 
+# Der rootless-Nix-Sandbox-Build braucht CAP_SYS_ADMIN (mount/unshare für den
+# Build-Namespace) und unmask=ALL (Podmans /proc,/sys-Schutzmasken entfernen,
+# damit Nix seine Sandbox-Mounts anlegen kann). Das ist breiter als eine reine
+# Mount-Capability; Blast-Radius bleibt der trusted, ephemere (--rm), lokale Build.
 podman run --rm --pull=never \
   --cap-add SYS_ADMIN \
   --security-opt unmask=ALL \

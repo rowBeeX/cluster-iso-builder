@@ -12,8 +12,10 @@ bash -n build.sh scripts/container-build.sh
 nix flake metadata --no-write-lock-file >/dev/null
 
 if [[ "$mode" == check ]]; then
-  nix flake check --no-build --show-trace
-  printf 'Source and flake evaluation checks passed.\n'
+  # Ohne --no-build: die nixfmt/deadnix/statix-Source-Checks werden tatsächlich
+  # gebaut/ausgeführt, nicht nur evaluiert (sonst wären die Gates ein No-op).
+  nix flake check --show-trace
+  printf 'Source and flake checks passed.\n'
   exit 0
 fi
 

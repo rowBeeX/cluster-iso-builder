@@ -86,7 +86,6 @@
     neovim
     nfs-utils
     nixos-install-tools
-    parted
     pciutils
     python3
     rsync

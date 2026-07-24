@@ -28,7 +28,7 @@ The ISO is a live NixOS installer that bootstraps a target host:
    none of that lives in this repo.
 
 The tools baked into the installer exist to support exactly this bootstrap:
-`gptfdisk` (`sgdisk`, partitioning; `parted` is bundled but unused), `sops`/`age` (decrypting host secrets during
+`gptfdisk` (`sgdisk`, partitioning), `sops`/`age` (decrypting host secrets during
 install), `nixos-install-tools`, the `zfs`/`btrfs-progs`/`lvm2`/`mdadm`/
 `nfs-utils` storage stacks, and `python3`/`rsync`/`git` for the install
 automation. The ISO carries no secrets itself; `sops`/`age` are for the
@@ -66,8 +66,7 @@ Use `REBUILD_IMAGE=1 ./build.sh` or `./build.sh --rebuild` after changing the
 
 The image enables key-only SSH for the configured operator key. The baked-in
 installer tools are the ones listed in *How the ISO is used downstream* above
-(`parted` is bundled but unused; `sgdisk` does the partitioning), plus common
-disk/network diagnostics.
+(`sgdisk` does the partitioning), plus common disk/network diagnostics.
 
 ## Updating inputs
 
@@ -98,10 +97,13 @@ podman run --rm -v "$PWD:/workspace:Z" -w /workspace \
   ```
 
   Without a key only the SHA256 checksum is produced (with a note).
-- **Nix sandbox (#31):** enforced in the rootless Podman container. The
-  container receives only the mount-namespace capability required by Nix and
-  fails closed if sandbox setup is unavailable; details are in the
-  `Containerfile`.
+- **Nix sandbox (#31):** enforced in the rootless Podman container (`nix.conf`
+  sets `sandbox=true`, `sandbox-fallback=false`, so a build aborts rather than
+  silently dropping the sandbox). To let Nix set up that sandbox rootless, the
+  container is run with `--cap-add SYS_ADMIN` and `--security-opt unmask=ALL`
+  (in `build.sh`, not the `Containerfile`) — broader than a single
+  mount-namespace capability, but scoped to a trusted, ephemeral (`--rm`), local
+  build.
 
 Do not commit ISOs, disk images, checksums generated for them, build metadata,
 or local credentials.
