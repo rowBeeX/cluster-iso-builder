@@ -1,7 +1,7 @@
 # Cluster NixOS ISO Builder
 
-Builds the x86_64 NixOS 26.05 installer used to provision the local and public
-development clusters. The build is isolated in a digest-pinned Podman image;
+Builds the x86_64 NixOS 26.05 installer used to provision the bare-metal hosts
+of the local cluster. The build is isolated in a digest-pinned Podman image;
 the exact nixpkgs revision is pinned by `flake.lock`.
 
 This repo sits *upstream* of everything else in the monorepo. It defines no
@@ -13,16 +13,18 @@ Envoy Gateway or ArgoCD exists on them.
 
 The ISO is a live NixOS installer that bootstraps a target host:
 
-1. Boot the ISO on the target hardware (a local-cluster or public-cluster node).
+1. Boot the ISO on the target hardware (a local-cluster node). The public
+   cluster runs on Hetzner Cloud vServers, where no custom ISO can be mounted —
+   see `public-cluster-nix/docs/operations.md` for that path.
 2. SSH into the live installer as `root`. Authentication is key-only: the
    operator SSH key(s) from `iso-authorized-keys` are the only accepted
    credentials; password and keyboard-interactive auth are refused
    (`configuration.nix`).
 3. Partition and format the disks and run `nixos-install` (`nixos-install-tools`)
-   via `install_dev_host.py` from `cluster-testing`, pointing at the host's flake
-   in the matching `*-nix` repo (`local-cluster-nix` / `public-cluster-nix`).
-   Partitioning is done imperatively with `gptfdisk` (`sgdisk`) + `mkfs`; the disk
-   UUIDs are fixed and mirror each host's `hosts/dev/*/storage-map.nix`.
+   via `install_host.py` from `cluster-testing`, pointing at the host's flake in
+   `local-cluster-nix`. Partitioning is done imperatively with `gptfdisk`
+   (`sgdisk`) + `mkfs`; the disk UUIDs are read from each host's
+   `hosts/<host>/storage-map.nix`, which stays the single source of truth.
 4. Reboot into the installed system. From there the node runs its NixOS config
    (k3s, Cilium CNI, the hostNetwork Envoy Gateway edge and Argo CD);
    none of that lives in this repo.
@@ -36,11 +38,11 @@ post-boot step.
 
 ```mermaid
 flowchart LR
-  dev["operator: build.sh --check / build.sh"] --> img["podman image (Containerfile, digest-pinned nixos/nix)"]
+  op["operator: build.sh --check / build.sh"] --> img["podman image (Containerfile, digest-pinned nixos/nix)"]
   img --> build["container-build.sh: nix build .#installerIso (flake.lock)"]
   build --> art["artifacts/: ISO + .iso.sha256 + meta/output-iso.json"]
   art --> boot["boot ISO on target host, SSH in with operator key"]
-  boot --> install["install_dev_host.py: partition + nixos-install from the host's *-nix flake"]
+  boot --> install["install_host.py: partition + nixos-install from local-cluster-nix"]
   install --> node["running cluster node (k3s, Cilium, Envoy Gateway, ArgoCD)"]
 ```
 
