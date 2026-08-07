@@ -53,7 +53,7 @@ install -m 0644 "${built_isos[0]}" "$output_dir/$out_name"
 
 # ISO + Checksumme signieren (#32) — nur wenn ein minisign-Secret-Key
 # bereitgestellt wird (gemountet/als Env, NICHT im Repo; passwortloser
-# Build-Key). Ohne Key: nur SHA256, mit Warnung. Verify:
+# Build-Key). Ohne Key: nur SHA256, mit Warnung. Verifizieren:
 #   minisign -Vm <iso> -P <public-key>
 if [[ -n "${MINISIGN_SECRET_KEY_FILE:-}" && -s "${MINISIGN_SECRET_KEY_FILE}" ]]; then
   minisign_bin="$(nix build --no-link --print-out-paths --inputs-from . nixpkgs#minisign)/bin/minisign"

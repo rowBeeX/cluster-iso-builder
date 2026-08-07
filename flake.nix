@@ -1,5 +1,5 @@
 {
-  description = "Reproducible NixOS installer ISO for Sedware clusters";
+  description = "Reproduzierbares NixOS-Installer-ISO für Sedware-Cluster";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";

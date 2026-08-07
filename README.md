@@ -1,49 +1,51 @@
-# Cluster NixOS ISO Builder
+# Cluster NixOS ISO-Builder
 
-Builds the x86_64 NixOS 26.05 installer used to provision the bare-metal hosts
-of the local cluster. The build is isolated in a digest-pinned Podman image;
-the exact nixpkgs revision is pinned by `flake.lock`.
+Erzeugt den x86_64-NixOS-26.05-Installer zur Bereitstellung der Bare-Metal-Hosts
+des lokalen Clusters. Der Build läuft isoliert in einem Digest-gepinnten Podman-
+Image; die exakte Nixpkgs-Revision wird durch `flake.lock` gepinnt.
 
-This repo sits *upstream* of everything else in the monorepo. It defines no
-runtime services, no networking, no DNS and holds no secrets; it only emits the
-installer ISO that boots bare-metal hosts before any NixOS config, k3s, Cilium,
-Envoy Gateway or ArgoCD exists on them.
+Dieses Repo steht *vorgelagert* zu allem anderen im Monorepo. Es definiert keine
+Runtime-Services, keine Networking-, DNS- oder Secrets-Komponenten; es erzeugt nur
+das Installer-ISO, das Bare-Metal-Hosts startet, bevor dort NixOS-Konfiguration,
+k3s, Cilium, Envoy Gateway oder ArgoCD existieren.
 
-## How the ISO is used downstream
+## Die ISO im Downstream-Betrieb
 
-The ISO is a live NixOS installer that bootstraps a target host:
+Das ISO ist ein Live-NixOS-Installer zur Bootstrap-Vorbereitung von Ziel-Hosts:
 
-1. Boot the ISO on the target hardware (a local-cluster node). The public
-   cluster runs on Hetzner Cloud vServers, where no custom ISO can be mounted —
-   see `public-cluster-nix/docs/operations.md` for that path.
-2. SSH into the live installer as `root`. Authentication is key-only: the
-   operator SSH key(s) from `iso-authorized-keys` are the only accepted
-   credentials; password and keyboard-interactive auth are refused
-   (`configuration.nix`).
-3. Partition and format the disks and run `nixos-install` (`nixos-install-tools`)
-   via `install_host.py` from `cluster-testing`, pointing at the host's flake in
-   `local-cluster-nix`. Partitioning is done imperatively with `gptfdisk`
-   (`sgdisk`) + `mkfs`; the disk UUIDs are read from each host's
-   `hosts/<host>/storage-map.nix`, which stays the single source of truth.
-4. Reboot into the installed system. From there the node runs its NixOS config
-   (k3s, Cilium CNI, the hostNetwork Envoy Gateway edge and Argo CD);
-   none of that lives in this repo.
+1. Das ISO auf der Ziel-Hardware starten (Knoten des lokalen Clusters). Der
+   öffentliche Cluster läuft auf Hetzner-Cloud-vServern, wo keine Custom-ISO
+   gemountet werden kann — siehe `public-cluster-nix/docs/operations.md` für
+   diesen Pfad.
+2. Sich als `root` über SSH in den Live-Installer einloggen. Authentifizierung ist
+   Key-only: die Operator-SSH-Keys aus `iso-authorized-keys` sind die einzigen
+   akzeptierten Credentials; Passwort- und Keyboard-Interactive-Auth sind
+   deaktiviert (`configuration.nix`).
+3. Disks partitionieren und formatieren, dann `nixos-install` (`nixos-install-
+   tools`) über `install_host.py` aus `cluster-testing` ausführen; dabei auf
+   das Host-Flake in `local-cluster-nix` verweisen. Partitionierung erfolgt
+   imperativ mit `gptfdisk` (`sgdisk`) + `mkfs`; Disk-UUIDs werden aus
+   `hosts/<host>/storage-map.nix` jedes Hosts gelesen, das die einzelne
+   Quelle der Wahrheit bleibt.
+4. In das installierte System rebootet. Von dort aus laufen NixOS-Konfiguration
+   des Knotens (k3s, Cilium CNI, das Envoy-Gateway-Edge im hostNetwork und
+   ArgoCD); davon lebt nichts in diesem Repo.
 
-The tools baked into the installer exist to support exactly this bootstrap:
-`gptfdisk` (`sgdisk`, partitioning), `sops`/`age` (decrypting host secrets during
-install), `nixos-install-tools`, the `zfs`/`btrfs-progs`/`lvm2`/`mdadm`/
-`nfs-utils` storage stacks, and `python3`/`rsync`/`git` for the install
-automation. The ISO carries no secrets itself; `sops`/`age` are for the
-post-boot step.
+Die im Installer eingebackenen Werkzeuge existieren genau für diesen Bootstrap:
+`gptfdisk` (`sgdisk`, Partitionierung), `sops`/`age` (Host-Secrets bei der
+Installation dekryptieren), `nixos-install-tools`, die Storage-Stacks
+`zfs`/`btrfs-progs`/`lvm2`/`mdadm`/`nfs-utils` und `python3`/`rsync`/`git`
+für die Install-Automatisierung. Das ISO trägt selbst keine Secrets; `sops`/
+`age` sind für die Post-Boot-Stufe.
 
 ```mermaid
 flowchart LR
-  op["operator: build.sh --check / build.sh"] --> img["podman image (Containerfile, digest-pinned nixos/nix)"]
+  op["Operator: build.sh --check / build.sh"] --> img["Podman-Image (Containerfile, Digest-gepinned nixos/nix)"]
   img --> build["container-build.sh: nix build .#installerIso (flake.lock)"]
   build --> art["artifacts/: ISO + .iso.sha256 + meta/output-iso.json"]
-  art --> boot["boot ISO on target host, SSH in with operator key"]
-  boot --> install["install_host.py: partition + nixos-install from local-cluster-nix"]
-  install --> node["running cluster node (k3s, Cilium, Envoy Gateway, ArgoCD)"]
+  art --> boot["ISO auf Ziel-Host starten, SSH mit Operator-Key"]
+  boot --> install["install_host.py: partitionieren + nixos-install aus local-cluster-nix"]
+  install --> node["Laufender Cluster-Knoten (k3s, Cilium, Envoy Gateway, ArgoCD)"]
 ```
 
 ## Build
@@ -53,59 +55,61 @@ flowchart LR
 ./build.sh
 ```
 
-`build.sh` is the entry point; it builds the Podman image if needed and runs
-`scripts/container-build.sh` inside it. That script performs the actual `nix build`
-and writes the ISO, checksum and metadata to `artifacts/`.
+`build.sh` ist der Einstiegspunkt; er baut das Podman-Image bei Bedarf und startet
+`scripts/container-build.sh` darin. Dieses Script führt den eigentlichen
+`nix build` aus und schreibt ISO, Prüfsumme und Metadaten nach `artifacts/`.
 
-The `artifacts/` directory and all common image formats are ignored by Git.
-A reference ISO is not required; Nix builds the installer directly from the
-locked inputs.
+Das Verzeichnis `artifacts/` und alle gängigen Image-Formate werden von Git
+ignoriert. Ein Referenz-ISO ist nicht erforderlich; Nix baut den Installer
+direkt aus den gepinnten Inputs.
 
-Use `REBUILD_IMAGE=1 ./build.sh` or `./build.sh --rebuild` after changing the
-`Containerfile`.
+Verwenden Sie `REBUILD_IMAGE=1 ./build.sh` oder `./build.sh --rebuild` nach
+Änderungen am `Containerfile`.
 
-## Installer contents
+## Installer-Inhalt
 
-The image enables key-only SSH for the configured operator key. The baked-in
-installer tools are the ones listed in *How the ISO is used downstream* above
-(`sgdisk` does the partitioning), plus common disk/network diagnostics.
+Das Image aktiviert Key-Only-SSH für den konfigurierten Operator-Key. Die
+eingebackenen Installer-Werkzeuge sind die in *Die ISO im Downstream-Betrieb*
+oben aufgelisteten (`sgdisk` führt die Partitionierung durch), plus gängige
+Disk- und Netzwerk-Diagnose-Tools.
 
-## Updating inputs
+## Inputs aktualisieren
 
-Update deliberately inside the build container, review the lock-file diff,
-then run a complete build:
+Aktualisierungen bewusst im Build-Container durchführen, das Lock-File-Diff
+überprüfen, dann einen vollständigen Build ausführen:
 
 ```bash
-# Reuse the image build.sh already built.
-image="${NIX_IMAGE:-local/cluster-iso-builder:26.05}"  # match build.sh's default, or set NIX_IMAGE
+# build.sh bereits gebautes Image weiterverwenden.
+image="${NIX_IMAGE:-local/cluster-iso-builder:26.05}"  # build.sh-Default matchen oder NIX_IMAGE setzen
 podman run --rm -v "$PWD:/workspace:Z" -w /workspace \
   --entrypoint bash "$image" -lc 'nix flake update'
 ./build.sh
 ```
 
-## SSH key & ISO signature
+## SSH-Key & ISO-Signatur
 
-- **Authorized installer SSH key (#30):** in `iso-authorized-keys` (one key per
-  line). Rotation = edit the file + rebuild. It is a public key (not a secret);
-  if you want to keep it private, gitignore the file and populate it per build
-  (the flake then only sees tracked files — track the file or build with
-  `--impure`).
-- **ISO signature (#32):** optional, with minisign. The secret key is NOT in the
-  repo; pass it at build time:
+- **Autorisierter Installer-SSH-Key (#30):** in `iso-authorized-keys` (ein
+  Key je Zeile). Rotation = Datei editieren + rebuild. Es ist ein öffentlicher
+  Key (kein Secret); um ihn privat zu halten: `iso-authorized-keys` gitignoren
+  und pro Build befüllen (das Flake sieht dann nur getracked-e Dateien — die
+  Datei tracken oder mit `--impure` bauen).
+- **ISO-Signatur (#32):** optional, mit minisign. Der Secret-Key ist NICHT im
+  Repo; zur Build-Zeit übergeben:
 
   ```bash
-  MINISIGN_SECRET_KEY_FILE=~/.minisign/iso.key ./build.sh   # produces <iso>.minisig
-  # Verify: minisign -Vm <iso> -P <public-key>
+  MINISIGN_SECRET_KEY_FILE=~/.minisign/iso.key ./build.sh   # erzeugt <iso>.minisig
+  # Verifizieren: minisign -Vm <iso> -P <public-key>
   ```
 
-  Without a key only the SHA256 checksum is produced (with a note).
-- **Nix sandbox (#31):** enforced in the rootless Podman container (`nix.conf`
-  sets `sandbox=true`, `sandbox-fallback=false`, so a build aborts rather than
-  silently dropping the sandbox). To let Nix set up that sandbox rootless, the
-  container is run with `--cap-add SYS_ADMIN` and `--security-opt unmask=ALL`
-  (in `build.sh`, not the `Containerfile`) — broader than a single
-  mount-namespace capability, but scoped to a trusted, ephemeral (`--rm`), local
-  build.
+  Ohne Key wird nur die SHA256-Prüfsumme erzeugt (mit Hinweis).
+- **Nix-Sandbox (#31):** erzwungen im rootless-Podman-Container (`nix.conf`
+  setzt `sandbox=true`, `sandbox-fallback=false`, sodass ein Build eher
+  abbricht, als die Sandbox stillschweigend fallengelassen). Um Nix die
+  Sandbox-Einrichtung rootless zu ermöglichen, wird der Container mit
+  `--cap-add SYS_ADMIN` und `--security-opt unmask=ALL` gestartet (in
+  `build.sh`, nicht `Containerfile`) — breiter als nur eine Mount-Namespace-
+  Capability, aber beschränkt auf einen vertrauenswürdigen, ephemeren
+  (`--rm`), lokalen Build.
 
-Do not commit ISOs, disk images, checksums generated for them, build metadata,
-or local credentials.
+ISOs, Disk-Images, daraus erzeugte Prüfsummen, Build-Metadaten oder lokale
+Credentials nicht committe.
