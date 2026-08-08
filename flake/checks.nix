@@ -1,4 +1,4 @@
-{ self, lib, ... }:
+{ self, ... }:
 
 # Erwarteter CI-Zustand: Alle Flake-Checks sind erfolgreich. Erzwingt dieselbe
 # Nix-Formatierung und Lint-Sauberkeit wie die Cluster-Repos, damit der ISO-
@@ -6,7 +6,7 @@
 
 {
   perSystem =
-    { pkgs, system, ... }:
+    { pkgs, ... }:
     let
       src = self;
 
@@ -25,7 +25,7 @@
           '';
     in
     {
-      checks = lib.optionalAttrs (system == "x86_64-linux") {
+      checks = {
         nixfmt-rfc-style = runSourceCheck "nixfmt-rfc-style-check" [ pkgs.nixfmt ] ''
           find . -path ./.git -prune -o -name '*.nix' -print0 | xargs -0 nixfmt --check
         '';
