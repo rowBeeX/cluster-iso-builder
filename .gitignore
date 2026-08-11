@@ -1,25 +1,33 @@
-# Nix build results and caches
+# Nix-Build-Ausgaben und Caches
 /result
 /result-*
 /.direnv/
 
-# Generated installer artifacts. Checksums and metadata belong to the ISO and
-# must not be committed either.
+# Generierte Installer-Artefakte. Prüfsummen und Metadaten gehören zur ISO
+# und werden ebenfalls nicht committet.
 /artifacts/
 *.iso
 *.iso.sha256
 *.img
 *.qcow2
 
-# Local credentials and tool state
+# Lokale Credentials und Tool-Zustand
 /.codex/
 /.env
-/secret/
-/secrets/
+/local-secrets/
 /.vectimus/keys/
 /.vectimus/receipts/
 
-# Editor and test debris
+# Schlüssel- und Klartext-Muster
+*.pem
+*.key
+id_*
+!*.pub
+*.dec
+*.plain
+*.decrypted
+
+# Editor- und Test-Reste
 *.log
 *.tmp
 .DS_Store
