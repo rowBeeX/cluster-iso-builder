@@ -10,7 +10,6 @@
     "${modulesPath}/installer/cd-dvd/installation-cd-minimal.nix"
   ];
 
-  # Dateisysteme
   # Attributset-Form statt Listenform, damit einzelne Einträge selektiv überschrieben werden können
   boot.supportedFilesystems = {
     btrfs = true;
@@ -21,7 +20,6 @@
   # ZFS benötigt eine Host-ID (muss nicht persistent sein, da nur Live-ISO)
   networking.hostId = "deadbeef";
 
-  # ISO-Metadaten
   networking.hostName = "nixos-installer";
 
   # mkForce überschreibt die Defaults aus installation-cd-minimal
@@ -32,7 +30,6 @@
   # Bessere Kompression (zstd ist schneller dekomprimierbar als xz, nur ~5 % größer)
   isoImage.squashfsCompression = "zstd -Xcompression-level 15";
 
-  # Locale & Konsole
   i18n.defaultLocale = "de_DE.UTF-8";
   console = {
     font = "Lat2-Terminus16";
@@ -40,14 +37,12 @@
   };
   time.timeZone = "Europe/Berlin";
 
-  # Nix-Einstellungen im Installer
   nix.settings = {
     # Parallelität anpassen (während des Bootstraps auf der Zielmaschine)
     max-jobs = "auto";
     cores = 0;
   };
 
-  # SSH (nur Key-Auth, kein Passwort)
   services.openssh = {
     enable = true;
     settings = {
@@ -57,7 +52,6 @@
     };
   };
 
-  # Benutzer
   users.users.root = {
     # Autorisierte Installer-SSH-Keys aus einer dedizierten Datei (#30), damit
     # der Operator-Key nicht im Modulcode verstreut liegt und Rotation ein
@@ -69,22 +63,17 @@
     );
   };
 
-  # Pakete im Installer-Image
   environment.systemPackages = with pkgs; [
     age
     btrfs-progs
     btop
     curl
-    cryptsetup
     git
     gptfdisk
     htop
     jq
     lshw
-    lvm2
-    mdadm
     neovim
-    nfs-utils
     nixos-install-tools
     pciutils
     python3

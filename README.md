@@ -34,9 +34,8 @@ Das ISO ist ein Live-NixOS-Installer zur Bootstrap-Vorbereitung von Ziel-Hosts:
 Die im Installer eingebackenen Werkzeuge existieren genau für diesen Bootstrap:
 `gptfdisk` (`sgdisk`, Partitionierung), `sops`/`age` (Host-Secrets bei der
 Installation dekryptieren), `nixos-install-tools`, die Storage-Stacks
-`zfs`/`btrfs-progs`/`lvm2`/`mdadm`/`nfs-utils` und `python3`/`rsync`/`git`
-für die Install-Automatisierung. Das ISO trägt selbst keine Secrets; `sops`/
-`age` sind für die Post-Boot-Stufe.
+`zfs`/`btrfs-progs` und `python3`/`rsync`/`git` für die Install-Automatisierung.
+Das ISO trägt selbst keine Secrets; `sops`/`age` sind für die Post-Boot-Stufe.
 
 ```mermaid
 flowchart LR
