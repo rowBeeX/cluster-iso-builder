@@ -13,7 +13,6 @@
         }).config.system.build.isoImage;
     in
     {
-      packages.default = installerIso;
       packages.installerIso = installerIso;
     };
 }
