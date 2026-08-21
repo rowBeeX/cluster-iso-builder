@@ -15,7 +15,7 @@ Dieses Repo hat **keine** Skills, und das bleibt so: seine gesamte Bedienung
 sind die vier Zeilen oben. Ein Skill hätte nichts hinzuzufügen, was hier nicht
 schon steht.
 
-Wozu das ISO gehört, steht in `../docs/08-notfall.md`: es ist der erste
+Wozu das ISO gehört, steht in `../../docs/08-notfall.md`: es ist der erste
 Schritt beim Wiederaufbau eines lokalen Hosts (ISO → `install_host.py` →
-SOPS-Age-Identität → `nixos-rebuild`). `../docs/10-repo-wegweiser.md` sagt, was
+SOPS-Age-Identität → `nixos-rebuild`). `../../docs/10-repo-wegweiser.md` sagt, was
 statt dessen woanders liegt.
