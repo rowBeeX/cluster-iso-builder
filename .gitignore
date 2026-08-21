@@ -31,3 +31,4 @@ id_*
 *.log
 *.tmp
 .DS_Store
+*.code-workspace
