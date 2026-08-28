@@ -22,9 +22,11 @@ Das ISO ist ein Live-NixOS-Installer zur Bootstrap-Vorbereitung von Ziel-Hosts:
    akzeptierten Credentials; Passwort- und Keyboard-Interactive-Auth sind
    deaktiviert (`configuration.nix`).
 3. Disks partitionieren und formatieren, dann `nixos-install` (`nixos-install-
-   tools`) über `install_host.py` aus `cluster-testing` ausführen; dabei auf
-   das Host-Flake in `local-cluster-nix` verweisen. Partitionierung erfolgt
-   imperativ mit `gptfdisk` (`sgdisk`) + `mkfs`; Disk-UUIDs werden aus
+   tools`) über `installer/install_host.py` (in diesem Repo — Bedienung,
+   Preflight-Stufe und die Warnung zum Disk-Guard stehen in
+   `installer/README.md`) ausführen; dabei auf das Host-Flake in
+   `local-cluster-nix` verweisen. Partitionierung erfolgt imperativ mit
+   `gptfdisk` (`sgdisk`) + `mkfs`; Disk-UUIDs werden aus
    `hosts/<host>/storage-map.nix` jedes Hosts gelesen, das die einzelne
    Quelle der Wahrheit bleibt.
 4. In das installierte System rebootet. Von dort aus laufen NixOS-Konfiguration
@@ -46,6 +48,22 @@ flowchart LR
   boot --> install["install_host.py: partitionieren + nixos-install aus local-cluster-nix"]
   install --> node["Laufender Cluster-Knoten (k3s, Cilium, Envoy Gateway, ArgoCD)"]
 ```
+
+## Repo-Struktur
+
+```
+Containerfile       Digest-gepinntes Podman-Build-Image
+flake.nix/.lock     Flake-Einstiegspunkt (flake-parts + import-tree) und Input-Lock
+configuration.nix   NixOS-Konfiguration des Installer-ISO
+flake/              perSystem-Module: Systeme, Formatter, Checks, das installerIso-Paket
+scripts/            container-build.sh, im Podman-Container ausgeführt
+installer/          Python-Skripte, die AUF dem gebooteten Installer laufen (siehe installer/README.md)
+artifacts/          Build-Ausgabe: ISO, Prüfsumme, Metadaten (gitignored)
+```
+
+Zentrale, bestandsweite Doku liegt in `<Monorepo>/cluster-docs/` — wozu das ISO
+im Gesamtbild gehört (Notfall-Wiederaufbau eines lokalen Hosts) steht dort in
+`08-notfall.md`, die Repo-Landkarte in `10-repo-wegweiser.md`.
 
 ## Build
 

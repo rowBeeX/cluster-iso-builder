@@ -32,3 +32,4 @@ id_*
 *.tmp
 .DS_Store
 *.code-workspace
+__pycache__/
