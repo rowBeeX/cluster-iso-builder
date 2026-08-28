@@ -53,7 +53,7 @@
   };
 
   users.users.root = {
-    # Autorisierte Installer-SSH-Keys aus einer dedizierten Datei (#30), damit
+    # Autorisierte Installer-SSH-Keys aus einer dedizierten Datei, damit
     # der Operator-Key nicht im Modulcode verstreut liegt und Rotation ein
     # Ein-Datei-Edit ist. Für eine private Ablage: `iso-authorized-keys`
     # gitignoren und pro Build befüllen (z. B. aus ~/.ssh/id_ed25519.pub).

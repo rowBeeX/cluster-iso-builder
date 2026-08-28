@@ -51,7 +51,7 @@ install -m 0644 "${built_isos[0]}" "$output_dir/$out_name"
   sha256sum "$out_name" > "$out_name.sha256"
 )
 
-# ISO + Checksumme signieren (#32) — nur wenn ein minisign-Secret-Key
+# ISO + Checksumme signieren — nur wenn ein minisign-Secret-Key
 # bereitgestellt wird (gemountet/als Env, NICHT im Repo; passwortloser
 # Build-Key). Ohne Key: nur SHA256, mit Warnung. Verifizieren:
 #   minisign -Vm <iso> -P <public-key>
@@ -64,7 +64,7 @@ if [[ -n "${MINISIGN_SECRET_KEY_FILE:-}" && -s "${MINISIGN_SECRET_KEY_FILE}" ]];
   )
   printf 'Signatur: %s.minisig\n' "$out_name"
 else
-  printf 'Hinweis: kein MINISIGN_SECRET_KEY_FILE — ISO nur mit SHA256, ohne Signatur (#32).\n' >&2
+  printf 'Hinweis: kein MINISIGN_SECRET_KEY_FILE — ISO nur mit SHA256, ohne Signatur.\n' >&2
 fi
 
 sha256="$(sha256sum "$output_dir/$out_name" | cut -d' ' -f1)"

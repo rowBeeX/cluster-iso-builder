@@ -105,12 +105,12 @@ podman run --rm -v "$PWD:/workspace:Z" -w /workspace \
 
 ## SSH-Key & ISO-Signatur
 
-- **Autorisierter Installer-SSH-Key (#30):** in `iso-authorized-keys` (ein
+- **Autorisierter Installer-SSH-Key:** in `iso-authorized-keys` (ein
   Key je Zeile). Rotation = Datei editieren + rebuild. Es ist ein öffentlicher
   Key (kein Secret); um ihn privat zu halten: `iso-authorized-keys` gitignoren
   und pro Build befüllen (das Flake sieht dann nur getracked-e Dateien — die
   Datei tracken oder mit `--impure` bauen).
-- **ISO-Signatur (#32):** optional, mit minisign. Der Secret-Key ist NICHT im
+- **ISO-Signatur:** optional, mit minisign. Der Secret-Key ist NICHT im
   Repo; zur Build-Zeit übergeben:
 
   ```bash
@@ -119,7 +119,7 @@ podman run --rm -v "$PWD:/workspace:Z" -w /workspace \
   ```
 
   Ohne Key wird nur die SHA256-Prüfsumme erzeugt (mit Hinweis).
-- **Nix-Sandbox (#31):** erzwungen im rootless-Podman-Container (`nix.conf`
+- **Nix-Sandbox:** erzwungen im rootless-Podman-Container (`nix.conf`
   setzt `sandbox=true`, `sandbox-fallback=false`, sodass ein Build eher
   abbricht, als die Sandbox stillschweigend fallengelassen). Um Nix die
   Sandbox-Einrichtung rootless zu ermöglichen, wird der Container mit
