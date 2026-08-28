@@ -2,7 +2,7 @@
 
 Dieses Repo baut nur das NixOS-Installer-ISO für die Bare-Metal-Hosts des
 lokalen Clusters. Der öffentliche Cluster läuft auf Hetzner-vServern und wird
-anders installiert (siehe `public-cluster-nix/docs/operations.md`).
+anders installiert (siehe `<Monorepo>/cluster-docs/betrieb/installation-public.md`).
 
 - Bauen nur über `./build.sh` im Podman-Container; die Workstation hat keine
   Nix-Toolchain.

@@ -15,7 +15,7 @@ Das ISO ist ein Live-NixOS-Installer zur Bootstrap-Vorbereitung von Ziel-Hosts:
 
 1. Das ISO auf der Ziel-Hardware starten (Knoten des lokalen Clusters). Der
    öffentliche Cluster läuft auf Hetzner-Cloud-vServern, wo keine Custom-ISO
-   gemountet werden kann — siehe `public-cluster-nix/docs/operations.md` für
+   gemountet werden kann — siehe `<Monorepo>/cluster-docs/betrieb/installation-public.md` für
    diesen Pfad.
 2. Sich als `root` über SSH in den Live-Installer einloggen. Authentifizierung ist
    Key-only: die Operator-SSH-Keys aus `iso-authorized-keys` sind die einzigen
