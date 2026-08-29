@@ -1,8 +1,7 @@
 { inputs, ... }:
 {
-  # Die reproduzierbare Installer-ISO als Flake-Paket. Analog zu den Cluster-
-  # Repos (flake/hosts.nix) wird die NixOS-Konfiguration hier zusammengesetzt;
-  # configuration.nix bleibt die einzige Modulquelle der Installer-Umgebung.
+  # Analog zu den Cluster-Repos (flake/hosts.nix); configuration.nix bleibt
+  # die einzige Modulquelle der Installer-Umgebung.
   perSystem =
     { system, ... }:
     let

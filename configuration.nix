@@ -53,11 +53,9 @@
   };
 
   users.users.root = {
-    # Autorisierte Installer-SSH-Keys aus einer dedizierten Datei, damit
-    # der Operator-Key nicht im Modulcode verstreut liegt und Rotation ein
-    # Ein-Datei-Edit ist. Für eine private Ablage: `iso-authorized-keys`
-    # gitignoren und pro Build befüllen (z. B. aus ~/.ssh/id_ed25519.pub).
-    # Es ist ein öffentlicher Key (kein Secret), aber ein Operator-Artefakt.
+    # Aus dedizierter Datei statt im Modulcode, damit Rotation ein Ein-Datei-
+    # Edit bleibt. Für private Ablage: `iso-authorized-keys` gitignoren und
+    # pro Build befüllen.
     openssh.authorizedKeys.keys = lib.filter (k: k != "" && !lib.hasPrefix "#" k) (
       lib.splitString "\n" (builtins.readFile ./iso-authorized-keys)
     );

@@ -50,14 +50,13 @@ from log import Logger
 def nix_repo_root() -> Path:
     """Wo `local-cluster-nix` auf dem Installer liegt.
 
-    Der Installer trägt beide Bäume nebeneinander unter /root. Die Umgebungs-
-    variable erlaubt eine abweichende Ablage, ohne das Skript anzufassen.
+    $LOCAL_CLUSTER_NIX_ROOT erlaubt eine abweichende Ablage, ohne das Skript
+    anzufassen.
     """
     env = os.environ.get("LOCAL_CLUSTER_NIX_ROOT")
     return Path(env) if env else Path(__file__).resolve().parents[2] / "local-cluster-nix"
 
-# Platzhalter, die der Guard garantiert ablehnt. Beim Provisionieren durch die
-# realen Werte der Maschine ersetzen (siehe Modul-Docstring).
+# Platzhalter, den der Guard garantiert ablehnt (siehe Modul-Docstring).
 _PLACEHOLDER_MAC = "00:00:00:00:00:00"
 
 
@@ -82,11 +81,8 @@ HOST_CONFIGS: dict[str, HostConfig] = {
         # Am laufenden Installer erhoben (lsblk -b -d, ip link, lsblk -o TRAN).
         root_disk="/dev/nvme0n1",  # 512 GB NVMe
         pool_disk="/dev/sda",  # 512 GB SATA-SSD (INTENSO), btrfs-Pool + SLOG/L2ARC
-        # Die vier ZFS-Platten hängen an einem USB-DAS (TerraMas TDAS). USB-
-        # Enumeration ist nicht stabil: sdb..sde können nach einem Reboot die
-        # Buchstaben tauschen, und alle vier sind exakt gleich groß, sodass ein
-        # Tausch am Größenvergleich nicht auffiele. Deshalb by-id statt /dev/sdX
-        # — die Seriennummer im Pfad bindet jedes vdev an genau eine Platte.
+        # by-id, nie /dev/sdX: die vier gleich großen USB-DAS-Platten tauschen
+        # über Reboots die Buchstaben, und der Größenvergleich merkt es nicht.
         raidz_disks=(
             "/dev/disk/by-id/ata-WDC_WD40EZRZ-22GXCB0_WD-WCC7K2FUKKZK",
             "/dev/disk/by-id/ata-WDC_WD40EZRZ-22GXCB0_WD-WCC7K4JFNND7",
@@ -107,12 +103,9 @@ HOST_CONFIGS: dict[str, HostConfig] = {
     "fujitsu-server": HostConfig(
         name="fujitsu-server",
         role="worker",
-        # by-id statt /dev/sdX: die Buchstaben haben zwischen zwei Bootvorgängen
-        # getauscht (erst SATA=sda/USB=sdb, dann USB=sda/SATA=sdb). Mit festen
-        # Buchstaben hätte der zweite Lauf das System auf die 16-TB-USB-Platte
-        # installiert und die SSD zum Bulk-Pool gemacht — genau verkehrt. Die
-        # Seriennummer im Pfad bindet jedes Ziel an genau ein Gerät; dieselbe
-        # Begründung gilt für die ZFS-Platten des Managers.
+        # by-id, nie /dev/sdX: SATA und USB haben zwischen zwei Bootvorgängen
+        # die Buchstaben getauscht — mit festen Buchstaben landet das System
+        # auf der 16-TB-USB-Platte. Details: cluster-docs/referenz/hosts.md.
         root_disk="/dev/disk/by-id/ata-ORICO-ZH10_2407VE1R910C0039",  # 128 GB SATA-SSD
         pool_disk="/dev/disk/by-id/usb-Seagate_Expansion_HDD_00000000NT17XGTC-0:0",  # 16 TB
         swap_size="+8G",
@@ -189,8 +182,6 @@ def part(disk: str, index: int) -> str:
 
     Drei Schreibweisen: udev haengt an by-id/by-path `-partN` an, NVMe und mmc
     brauchen ein `p` vor der Nummer, alles andere haengt die Nummer direkt an.
-    Die by-id-Form fiel bisher nicht auf, weil nur die ZFS-Platten des Managers
-    by-id adressiert werden und `make_zfs_pool` sie ungeteilt an `zpool` gibt.
     """
     if disk.startswith("/dev/disk/by-"):
         return f"{disk}-part{index}"
@@ -198,15 +189,11 @@ def part(disk: str, index: int) -> str:
 
 
 def wipe_disk(dev: str) -> None:
-    # TRIM zuerst. Die SSD in fujitsu-server liefert `Medium Error` fuer jede
-    # Flash-Seite ohne gueltig geschriebenen Inhalt — nach einer abgebrochenen
-    # Installation blieb das Mapping inkonsistent, und ausgerechnet die letzten
-    # Sektoren waren betroffen. Dort liegt die GPT-Sicherungstabelle: sgdisk
-    # scheiterte an ihr und verwarf daraufhin auch die primaere Tabelle, sodass
-    # gar keine Partitionen entstanden. Ein blkdiscard raeumt das in Sekunden
-    # ab (gemessen: 2,3 s fuer 128 GB, danach 0 Fehler im Vollesen).
-    # check=False, weil rotierende Platten kein TRIM koennen — dort ist der
-    # Aufruf folgenlos.
+    # blkdiscard MUSS vor sgdisk laufen: die SSD in fujitsu-server meldet
+    # `Medium Error` für nie beschriebene Seiten, sgdisk scheitert dann an der
+    # GPT-Sicherungstabelle und verwirft auch die primäre — es entstehen gar
+    # keine Partitionen. Details: cluster-docs/referenz/hosts.md.
+    # check=False, weil rotierende Platten kein TRIM können.
     run(["blkdiscard", dev], check=False)
     run(["wipefs", "-a", dev], check=False)
     run(["sgdisk", "--zap-all", dev], check=False)
@@ -375,17 +362,12 @@ def _meminfo_kib(key: str) -> int:
 def grow_installer_store() -> None:
     """Den beschreibbaren Store des Installers vergrößern, sobald Swap läuft.
 
-    Das Live-ISO legt /nix/.rw-store als tmpfs mit dem Default von 50 % des RAM
-    an. Auf fujitsu-server (7,4 GiB) sind das 3,8 GB — gegen eine System-Closure
-    von 2,9 GiB. Das reicht rechnerisch, aber ohne nennenswerte Reserve, und ein
-    ENOSPC schlägt erst mitten in `nixos-install` zu: die Disks sind dann bereits
-    formatiert und der Host bleibt unbootbar zurück.
-
-    Die Obergrenze eines tmpfs ist nur eine Grenze, keine Belegung. Nach
-    `swapon` (mount_install_layout) stehen RAM + Swap zur Verfügung, Seiten
-    dürfen also auslagern. Deshalb hier auf RAM + Swap abzüglich 2 GiB Reserve
-    anheben — auf einer großen Maschine schrumpft das nichts, weil nur
-    vergrößert wird.
+    /nix/.rw-store ist ein tmpfs mit 50 % RAM als Default (auf fujitsu-server
+    3,8 GB gegen eine System-Closure von 2,9 GiB — ohne Anhebung schlägt ein
+    ENOSPC erst mitten in `nixos-install` zu, wenn die Disks bereits
+    formatiert sind). Die Obergrenze eines tmpfs ist nur eine Grenze, keine
+    Belegung: remount auf RAM + Swap abzüglich 2 GiB Reserve schrumpft auf
+    einer großen Maschine nichts, weil nur vergrößert wird.
     """
     store = Path("/nix/.rw-store")
     if not store.is_mount():
@@ -408,13 +390,9 @@ _BOOT_ENTRY_LABEL = "Linux Boot Manager"
 def prefer_installed_boot_entry() -> None:
     """Den frisch angelegten EFI-Eintrag an den Anfang der BootOrder stellen.
 
-    Ohne das bootet die Maschine am neuen System vorbei. Auf fujitsu-server stand
-    nach der ersten Installation `BootOrder: 000A,000B,000C,0008,0000,0009,0001`
-    — der USB-Installerstick zuerst, "Linux Boot Manager" (0001) zuletzt, und
-    dazwischen ein BBS-Legacy-Eintrag auf dieselbe SSD, die nach dem
-    GPT-Neuaufbau keinen MBR-Bootcode mehr hat. Der Host war danach auf keiner
-    Adresse mehr erreichbar; ein Thin Client hat weder IPMI noch serielle
-    Konsole, also half nur ein Gang zum Geraet.
+    Ohne das bootet die Maschine am neuen System vorbei — auf einem Thin
+    Client ohne IPMI/serielle Konsole nur noch am Geraet selbst zu beheben
+    (Details: cluster-docs/betrieb/installation-lokal.md).
 
     Fehler sind hier nicht fatal: das System ist installiert, es bootet nur
     womoeglich nicht von selbst. Deshalb warnen statt abbrechen.
@@ -440,10 +418,9 @@ def prefer_installed_boot_entry() -> None:
               "nach dem Reboot im Bootmenue haendisch waehlen")
         return
 
-    # Eine Neuinstallation laesst den Eintrag der vorherigen stehen: er zeigt
-    # dann auf eine ESP-Partitions-GUID, die es nicht mehr gibt, und erscheint
-    # als `VenHw(...)` ohne Geraetepfad. Der brauchbare Eintrag traegt `HD(`.
-    # Ohne diese Unterscheidung waehlt man die Leiche und bootet wieder nirgends.
+    # Der Eintrag einer Neuinstallation zeigt auf eine nicht mehr existierende
+    # ESP-GUID und erscheint als `VenHw(...)` ohne Geraetepfad; nur `HD(`-
+    # Eintraege sind brauchbar.
     usable = [num for num, tail in entries if "HD(" in (tail or "")]
     if not usable:
         print(f"WARNUNG: nur Eintraege ohne Geraetepfad gefunden "
@@ -469,7 +446,6 @@ def install_system(host: str, repo_root: Path, age_key: Path) -> None:
         check=True,
     )
 
-    # Korrektes Eigentum sicherstellen
     subprocess.run(["chown", "-R", "root:root", str(repo_root)], check=True)
 
     # Minimales .git anlegen, falls es fehlt (Installer-tmpfs zu klein für .git)

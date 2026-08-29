@@ -26,11 +26,9 @@ fi
 
 mkdir -p "$output_dir" "$meta_dir"
 
-# jq aus den gepinnten nixpkgs (über den Flake-Lock) beziehen, damit die
-# Metadatenerzeugung nicht von einer ungepinnten Registry-Installation abhängt.
-# Den `bin`-Output von jq explizit wählen: jq besitzt mehrere Outputs (bin + man),
-# und ein einfaches `nixpkgs#jq` liefert mehrere Store-Pfade, an die sich /bin/jq
-# nicht korrekt anhängen ließe.
+# jq aus den gepinnten nixpkgs statt einer ungepinnten Registry-Installation.
+# Explizit den `bin`-Output wählen: `nixpkgs#jq` allein liefert mehrere
+# Store-Pfade (bin + man), an die sich /bin/jq nicht eindeutig anhängen liesse.
 jq_bin="$(nix build --no-link --print-out-paths --inputs-from . nixpkgs#jq.bin)/bin/jq"
 
 out_link="$(mktemp -d)/installer-iso"
@@ -51,10 +49,8 @@ install -m 0644 "${built_isos[0]}" "$output_dir/$out_name"
   sha256sum "$out_name" > "$out_name.sha256"
 )
 
-# ISO + Checksumme signieren — nur wenn ein minisign-Secret-Key
-# bereitgestellt wird (gemountet/als Env, NICHT im Repo; passwortloser
-# Build-Key). Ohne Key: nur SHA256, mit Warnung. Verifizieren:
-#   minisign -Vm <iso> -P <public-key>
+# minisign-Secret-Key wird gemountet/als Env übergeben, liegt NICHT im Repo
+# (passwortloser Build-Key).
 if [[ -n "${MINISIGN_SECRET_KEY_FILE:-}" && -s "${MINISIGN_SECRET_KEY_FILE}" ]]; then
   minisign_bin="$(nix build --no-link --print-out-paths --inputs-from . nixpkgs#minisign)/bin/minisign"
   (

@@ -17,10 +17,8 @@ def _live_medium_disks() -> set[str]:
     """Disks, von denen der Installer selbst läuft.
 
     Der Boot-Stick gehört nicht zur Disk-Topologie des Hosts: er wechselt, und
-    ein anderer Stick hätte eine andere Größe. Stünde er in der erwarteten
-    Topologie, schlüge der Vergleich beim nächsten Stick fehl; stünde er nicht
-    drin, schlüge er sofort fehl. Deshalb wird er hier ermittelt und aus dem
-    Vergleich genommen — die Zielplatten selbst bleiben lückenlos geprüft.
+    ein anderer Stick hätte eine andere Größe. Deshalb wird er hier ermittelt
+    und aus dem Vergleich genommen — die Zielplatten bleiben lückenlos geprüft.
     """
     disks: set[str] = set()
     for mountpoint in ("/iso", "/nix/.ro-store"):
@@ -68,10 +66,8 @@ def verify_install_target(
         and fields[0] not in live_disks
     }
     # `lsblk` liefert immer /dev/sdX, die erwartete Topologie darf dagegen
-    # by-id-Pfade führen (stabil gegen vertauschte Buchstaben). Verglichen wird
-    # deshalb über den aufgelösten Gerätepfad, gemeldet weiterhin die
-    # ursprüngliche Schreibweise — sonst nennt der Fehler Pfade, die so in der
-    # Konfiguration gar nicht stehen.
+    # by-id-Pfade führen. Verglichen wird über den aufgelösten Gerätepfad,
+    # gemeldet aber die ursprüngliche Schreibweise aus der Konfiguration.
     resolved_expected = {
         os.path.realpath(device): size for device, size in expected_disks.items()
     }
@@ -83,9 +79,9 @@ def verify_install_target(
         )
 
     for device, expected_size in expected_disks.items():
-        # Ueber den aufgeloesten Pfad pruefen: bei einem by-id-Symlink hiesse der
+        # Über den aufgelösten Pfad prüfen: bei einem by-id-Symlink hiesse der
         # Knoten sonst `ata-ORICO-...`, und die Holder-Pruefung unten faende
-        # /sys/class/block/<name> nicht — sie wuerde kommentarlos durchwinken.
+        # /sys/class/block/<name> nicht — sie würde kommentarlos durchwinken.
         path = Path(os.path.realpath(device))
         if not path.is_block_device():
             raise SystemExit(f"Ziel ist kein Block-Device: {device}")

@@ -1,8 +1,7 @@
 { self, ... }:
 
-# Erwarteter CI-Zustand: Alle Flake-Checks sind erfolgreich. Erzwingt dieselbe
-# Nix-Formatierung und Lint-Sauberkeit wie die Cluster-Repos, damit der ISO-
-# Builder nicht stilistisch driftet.
+# Erzwingt dieselbe Nix-Formatierung und Lint-Sauberkeit wie die Cluster-Repos,
+# damit der ISO-Builder nicht stilistisch driftet.
 
 {
   perSystem =
