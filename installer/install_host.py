@@ -147,7 +147,7 @@ def storage_map(host: str) -> dict[str, str]:
         match = re.search(rf'^\s*{key}\s*=\s*"([^"]+)";', text, re.MULTILINE)
         if match:
             values[key] = match.group(1)
-    missing = [key for key in ("bootUuid", "swapUuid", "rootUuid") if key not in values]
+    missing = [key for key in _UUID_KEYS if key not in values]
     if missing:
         raise SystemExit(f"{path}: fehlende UUIDs {missing}")
     return values
@@ -243,8 +243,6 @@ def make_root_disk(cfg: HostConfig, uuids: dict[str, str]) -> None:
 def make_btrfs_pool(
     dev: str, uuid: str, *, data_subvolume: str = "kubernetes", label: str = "datapool"
 ) -> None:
-    if not uuid:
-        return
     wipe_disk(dev)
     run(["sgdisk", "-n1:0:0", "-t1:8300", "-c1:btrfs-pool", dev])
     run(["partprobe", dev])
@@ -561,62 +559,66 @@ def main() -> None:
         return
     cleanup_mounts()
 
-    log.step("Root-Disk formatieren")
-    make_root_disk(cfg, uuids)
+    try:
+        log.step("Root-Disk formatieren")
+        make_root_disk(cfg, uuids)
 
-    pool_uuid = uuids.get("btrfsPoolUuid", "")
-    if cfg.role == "manager":
-        log.step("Manager-SSD formatieren")
-        make_manager_ssd_disk(cfg.pool_disk, pool_uuid)
-        log.step("ZFS-Datapool anlegen")
-        make_zfs_pool(cfg)
-    else:
-        log.step("Btrfs-Pool formatieren")
-        make_btrfs_pool(cfg.pool_disk, pool_uuid)
+        pool_uuid = uuids["btrfsPoolUuid"]
+        if cfg.role == "manager":
+            log.step("Manager-SSD formatieren")
+            make_manager_ssd_disk(cfg.pool_disk, pool_uuid)
+            log.step("ZFS-Datapool anlegen")
+            make_zfs_pool(cfg)
+        else:
+            log.step("Btrfs-Pool formatieren")
+            make_btrfs_pool(cfg.pool_disk, pool_uuid)
 
-    log.step("Install-Layout mounten")
-    mount_install_layout(cfg)
+        log.step("Install-Layout mounten")
+        mount_install_layout(cfg)
 
-    # Erst hier, nicht früher: die Vergrößerung lebt vom Swap, den
-    # mount_install_layout gerade eingeschaltet hat.
-    log.step("Installer-Store vergrößern")
-    grow_installer_store()
+        # Erst hier, nicht früher: die Vergrößerung lebt vom Swap, den
+        # mount_install_layout gerade eingeschaltet hat.
+        log.step("Installer-Store vergrößern")
+        grow_installer_store()
 
-    if cfg.role == "manager":
-        log.step("ZFS-Verschlüsselungsschlüssel nach /persist verschieben")
-        Path("/mnt/persist/secrets/zfs").mkdir(parents=True, mode=0o700, exist_ok=True)
-        subprocess.run(
-            [
-                "install",
-                "-m",
-                "0400",
-                "/tmp/datapool.key",
-                "/mnt/persist/secrets/zfs/datapool.key",
-            ],
-            check=True,
-        )
-        subprocess.run(
-            ["zpool", "import", "-d", "/dev/disk/by-id", "datapool"], check=True
-        )
-        subprocess.run(
-            [
-                "zfs",
-                "set",
-                "keylocation=file:///persist/secrets/zfs/datapool.key",
-                "datapool",
-            ],
-            check=True,
-        )
-        subprocess.run(["zpool", "export", "datapool"], check=True)
+        if cfg.role == "manager":
+            log.step("ZFS-Verschlüsselungsschlüssel nach /persist verschieben")
+            Path("/mnt/persist/secrets/zfs").mkdir(parents=True, mode=0o700, exist_ok=True)
+            subprocess.run(
+                [
+                    "install",
+                    "-m",
+                    "0400",
+                    "/tmp/datapool.key",
+                    "/mnt/persist/secrets/zfs/datapool.key",
+                ],
+                check=True,
+            )
+            Path("/tmp/datapool.key").unlink()
+            subprocess.run(
+                ["zpool", "import", "-d", "/dev/disk/by-id", "datapool"], check=True
+            )
+            subprocess.run(
+                [
+                    "zfs",
+                    "set",
+                    "keylocation=file:///persist/secrets/zfs/datapool.key",
+                    "datapool",
+                ],
+                check=True,
+            )
+            subprocess.run(["zpool", "export", "datapool"], check=True)
 
-    log.step("System installieren")
-    install_system(args.host, args.repo_root, args.age_key)
+        log.step("System installieren")
+        install_system(args.host, args.repo_root, args.age_key)
 
-    log.step("BootOrder auf das installierte System stellen")
-    prefer_installed_boot_entry()
-
-    log.step("Mounts bereinigen")
-    cleanup_mounts()
+        log.step("BootOrder auf das installierte System stellen")
+        prefer_installed_boot_entry()
+    finally:
+        # Läuft auch bei einem Abbruch mitten in der Installation — sonst
+        # bleiben Mounts unter /mnt und ein importierter zpool stehen.
+        log.step("Mounts bereinigen")
+        cleanup_mounts()
 
     log.section(f"Installation von {args.host} abgeschlossen")
 
