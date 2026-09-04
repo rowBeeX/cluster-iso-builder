@@ -73,6 +73,17 @@ python /root/cluster-iso-builder/installer/install_host.py \
 (Worker); `--confirm-wipe` muss exakt denselben Namen tragen — eine reine
 Tippfehlersperre, kein zweiter Identitätsnachweis.
 
+## Bei Abbruch
+
+Ab der Formatierung steht der Lauf in einem `try`/`finally`: bricht ein
+Schritt ab, räumt `finally` Mounts unter `/mnt`, aktive Swaps und einen
+bereits importierten `datapool` auf (`cleanup_mounts()`), bevor der Fehler
+sichtbar wird — ohne das war nach einem Abbruch ein manuelles `umount -R
+/mnt` bzw. `zpool export datapool` nötig, bevor ein erneuter Lauf greifen
+konnte. Was dabei **nicht** rückgängig gemacht wird: bereits gewipte oder
+neu formatierte Disks bleiben, wie sie sind — vor einem erneuten Versuch
+wieder mit `--preflight-only` beginnen.
+
 ## Warnung: der Guard prüft Identität, nicht Inhalt
 
 `install_disk_guard.py` stellt sicher, dass die richtige **Maschine** vor

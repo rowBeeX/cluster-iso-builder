@@ -23,8 +23,9 @@ Das ISO ist ein Live-NixOS-Installer zur Bootstrap-Vorbereitung von Ziel-Hosts:
    deaktiviert (`configuration.nix`).
 3. Disks partitionieren und formatieren, dann `nixos-install` (`nixos-install-
    tools`) über `installer/install_host.py` (in diesem Repo — Bedienung,
-   Preflight-Stufe und die Warnung zum Disk-Guard stehen in
-   `installer/README.md`) ausführen; dabei auf das Host-Flake in
+   Preflight-Stufe, Aufräumverhalten bei Abbruch und die Warnung zum
+   Disk-Guard stehen in `installer/README.md`) ausführen; dabei auf das
+   Host-Flake in
    `local-cluster-nix` verweisen. Partitionierung erfolgt imperativ mit
    `gptfdisk` (`sgdisk`) + `mkfs`; Disk-UUIDs werden aus
    `hosts/<host>/storage-map.nix` jedes Hosts gelesen, das die einzelne
